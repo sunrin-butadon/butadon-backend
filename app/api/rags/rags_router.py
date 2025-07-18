@@ -22,7 +22,7 @@ async def create_rag(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    rag = crud.create_rag(item, current_user['id'], db)
+    rag = crud.create_rag(item, current_user['sub'], db)
     return rag
 
 @router.get("/list", tags=["rags"], response_model=List[dto.RagResponseDTO])
@@ -51,7 +51,7 @@ async def build_rag_db(
     if not rag:
         raise HTTPException(status_code=404, detail="RAG를 찾을 수 없습니다.")
     
-    if rag.made_by_user != current_user['id']:
+    if rag.made_by_user != current_user['sub']:
         raise HTTPException(status_code=403, detail="권한이 없습니다.")
     
     build_result = build_db(rag_id, db)
