@@ -10,7 +10,7 @@ import app.api.users.users_crud as crud
 router = APIRouter()
 
 @router.post("/register", response_model=dto.UserResponseDTO, tags=["users"])
-async def register_user(item:dto.UserCreateDTO, db: Session = Depends(get_db)):\
+async def register_user(item:dto.UserCreateDTO, db: Session = Depends(get_db)):
     # 이메일 중복확인
     if crud.get_user_by_email(item.email, db):
         raise HTTPException(status_code=400, detail="Email already registered")
