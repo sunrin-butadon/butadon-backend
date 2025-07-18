@@ -76,20 +76,25 @@ async def search_rag_documents(
     return chroma_client.search_by_embedding(chroma_client.get_chroma_collection_name(rag_id=item.rag_id),chroma_client._get_embedding(item.query))
 
 
-@router.post("/qestion_answer", tags=["rags"], response_model=dto.RagQuestionResponseDTO)
-async def rag_question_answer(item:dto.RagQuestionDTO, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+@router.get("/{rag_id}/question_answer", tags=["rags"], response_model=dto.RagQuestionResponseDTO)
+async def rag_question_answer(
+    rag_id: str,
+    question: str,
+    db: Session = Depends(get_db), 
+    current_user: dict = Depends(get_current_user)
+):
     """
     RAG를 사용하여 질문에 대한 답변을 생성합니다.
     """
-    rag = crud.get_rag_by_id(item.rag_id, db)
+    rag = crud.get_rag_by_id(rag_id, db)
     
     if not rag:
         raise HTTPException(status_code=404, detail="RAG를 찾을 수 없습니다.")
     
     # RAG 벡터 데이터베이스에서 문서 검색
     search_results = chroma_client.search_by_embedding(
-        chroma_client.get_chroma_collection_name(rag_id=item.rag_id),
-        chroma_client._get_embedding(item.question)
+        chroma_client.get_chroma_collection_name(rag_id=rag_id),
+        chroma_client._get_embedding(question)
     )
     
     if not search_results or not search_results['documents']:
@@ -105,7 +110,7 @@ async def rag_question_answer(item:dto.RagQuestionDTO, db: Session = Depends(get
         model=rag.llm_model,
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": item.question},
+            {"role": "user", "content": question},
             {"role": "assistant", "content": "\n".join(documents)}
         ]
     )
