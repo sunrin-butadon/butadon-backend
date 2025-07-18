@@ -1,3 +1,5 @@
+auto_pull.sh
+
 *.db
 *.sqlite3
 
