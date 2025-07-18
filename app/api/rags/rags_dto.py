@@ -46,3 +46,8 @@ class RagDocumentSearchDTO(BaseModel):
     rag_id: str
     query: str
     top_k: int = 5
+
+class RagQuestionDTO(BaseModel):
+    rag_id: str
+    question: str
+    top_k: int = 5

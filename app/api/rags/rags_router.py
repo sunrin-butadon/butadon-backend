@@ -74,3 +74,40 @@ async def search_rag_documents(
     
     
     return chroma_client.search_by_embedding(chroma_client.get_chroma_collection_name(rag_id=item.rag_id),chroma_client._get_embedding(item.query))
+
+
+@router.post("/qestion_answer", tags=["rags"])
+async def rag_question_answer(item:dto.RagQuestionDTO, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    """
+    RAG를 사용하여 질문에 대한 답변을 생성합니다.
+    """
+    rag = crud.get_rag_by_id(item.rag_id, db)
+    
+    if not rag:
+        raise HTTPException(status_code=404, detail="RAG를 찾을 수 없습니다.")
+    
+    # RAG 벡터 데이터베이스에서 문서 검색
+    search_results = chroma_client.search_by_embedding(
+        chroma_client.get_chroma_collection_name(rag_id=item.rag_id),
+        chroma_client._get_embedding(item.question)
+    )
+    
+    if not search_results or not search_results['documents']:
+        raise HTTPException(status_code=404, detail="관련 문서를 찾을 수 없습니다.")
+    
+    # 검색 결과를 평탄화하여 문자열로 변환
+    documents = []
+    for doc_list in search_results['documents']:
+        documents.extend(doc_list)
+    
+    # OpenAI API를 사용하여 답변 생성
+    response = chroma_client.openai_client.chat.completions.create(
+        model=rag.llm_model,
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": item.question},
+            {"role": "assistant", "content": "\n".join(documents)}
+        ]
+    )
+    
+    return {"answer": response.choices[0].message.content}
