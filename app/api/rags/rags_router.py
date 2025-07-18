@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Dict
-from pydantic import BaseModel
-import json
 
 
 from app.db.deps import get_db
