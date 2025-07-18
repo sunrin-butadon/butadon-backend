@@ -1,8 +1,10 @@
+from xml.dom.minidom import Document
+from chromadb import URI, Embeddings, IDs, Include
+import numpy as np
 from pydantic import BaseModel, validator
-from typing import Optional, List
+from typing import Optional, List, Union
 from datetime import datetime
 import json
-
 
 class RagCreateDTO(BaseModel):
     name: str
@@ -51,3 +53,20 @@ class RagQuestionDTO(BaseModel):
     rag_id: str
     question: str
     top_k: int = 5
+
+class RagQuestionResponseDTO(BaseModel):
+    answer: str
+    
+class RagBuildResponseDTO(BaseModel):
+    message: str
+
+    
+class RagDocumentSearchResponseDTO(BaseModel):
+    ids: List[List[str]]
+    embeddings: Optional[List[List[float]]] = None
+    documents: List[List[str]]
+    uris: Optional[List[List[str]]] = None
+    included: List[str]
+    data: Optional[dict] = None
+    metadatas: Optional[List[List[Optional[dict]]]] = None
+    distances: Optional[List[List[float]]] = None

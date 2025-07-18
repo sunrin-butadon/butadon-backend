@@ -4,6 +4,7 @@ from typing import List, Dict
 from pydantic import BaseModel
 import json
 
+
 from app.db.deps import get_db
 from app.core.auth import get_current_user
 import app.api.rags.rags_crud as crud
@@ -40,19 +41,18 @@ async def get_rag(rag_id: str, db: Session = Depends(get_db)):
 
 
 
-@router.post("/{rag_id}/build_db", tags=["rags"])
+@router.post("/{rag_id}/build", tags=["rags"], response_model=dto.RagBuildResponseDTO)
 async def build_rag_db(
     rag_id: str,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-
     rag = crud.get_rag_by_id(rag_id, db)
     if not rag:
         raise HTTPException(status_code=404, detail="RAG를 찾을 수 없습니다.")
     
     if rag.made_by_user != current_user['id']:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="권한이 없습니다.")
+        raise HTTPException(status_code=403, detail="권한이 없습니다.")
     
     build_result = build_db(rag_id, db)
     
@@ -61,7 +61,7 @@ async def build_rag_db(
     
     return {"message": "RAG 벡터 데이터베이스가 성공적으로 구축되었습니다."}
 
-@router.post("/document_search", tags=["rags"])
+@router.post("/document_search", tags=["rags"], response_model=dto.RagDocumentSearchResponseDTO)
 async def search_rag_documents(
     item: dto.RagDocumentSearchDTO,
     db: Session = Depends(get_db),
@@ -76,7 +76,7 @@ async def search_rag_documents(
     return chroma_client.search_by_embedding(chroma_client.get_chroma_collection_name(rag_id=item.rag_id),chroma_client._get_embedding(item.query))
 
 
-@router.post("/qestion_answer", tags=["rags"])
+@router.post("/qestion_answer", tags=["rags"], response_model=dto.RagQuestionResponseDTO)
 async def rag_question_answer(item:dto.RagQuestionDTO, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     """
     RAG를 사용하여 질문에 대한 답변을 생성합니다.

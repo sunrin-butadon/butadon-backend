@@ -18,7 +18,7 @@ router = APIRouter()
 ALLOWED_EXTENSIONS = {".pdf", ".txt"}
 
 
-@router.get("/list", tags=["datasets"])
+@router.get("/list", tags=["datasets"], response_model=list[DatasetResponseDTO])
 async def list_datasets(db: Session = Depends(get_db)):
     """
     데이터셋 목록을 조회합니다.
