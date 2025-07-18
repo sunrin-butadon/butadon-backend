@@ -1,6 +1,5 @@
 from sqlalchemy import (Column,
                         String)
-from sqlalchemy.orm import relationship
 import cuid
 
 from app.db.sqlite.base import Base
@@ -12,3 +11,9 @@ class User(Base):
     username = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+
+    bookmarked_rag_ids = Column(String, default="[]")  # Store as JSON string
+    bookmarked_dataset_ids = Column(String, default="[]")  # Store as JSON string
+
+    created_rag_ids = Column(String, default="[]")  # Store as JSON string
+    created_dataset_ids = Column(String, default="[]")  # Store as JSON string
