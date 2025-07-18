@@ -9,6 +9,23 @@ import app.api.users.users_crud as crud
 
 router = APIRouter()
 
+@router.get("/{user_id}/info/", response_model=dto.UserInfoDTO, tags=["users"])
+async def get_users(
+    user_id: str,
+    db: Session = Depends(get_db)
+):
+    user = crud.get_user_by_id(user_id, db)
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return dto.UserInfoDTO(
+        cuid=user.cuid,
+        username=user.username,
+        email=user.email
+    )
+
+
 @router.post("/register", response_model=dto.UserResponseDTO, tags=["users"])
 async def register_user(item:dto.UserCreateDTO, db: Session = Depends(get_db)):
     # 이메일 중복확인

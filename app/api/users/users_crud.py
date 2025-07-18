@@ -9,7 +9,7 @@ import app.api.users.users_dto as dto
 def get_user_by_email(email: str, db: Session):
     return db.query(User).filter(User.email == email).first()
 
-def get_user_by_id(user_id: str, db: Session):
+def get_user_by_id(user_id: str, db: Session) -> User:
     return db.query(User).filter(User.cuid == user_id).first()
 
 def register_user(item: dto.UserCreateDTO, db: Session):

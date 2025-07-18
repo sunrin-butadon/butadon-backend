@@ -21,6 +21,11 @@ class UserResponseDTO(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr = Field(..., max_length=100)
 
+class UserInfoDTO(BaseModel):
+    cuid: str
+    username: str
+    email: EmailStr
+
 class UserProfileDTO(BaseModel):
     cuid: str
     username: str
