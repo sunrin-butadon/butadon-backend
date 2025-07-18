@@ -76,13 +76,11 @@ async def search_rag_documents(
     return chroma_client.search_by_embedding(chroma_client.get_chroma_collection_name(rag_id=item.rag_id),chroma_client._get_embedding(item.query))
 
 
-@router.get("/{rag_id}/question_answer", tags=["rags"], response_model=dto.RagQuestionResponseDTO)
+@router.get("/{rag_id}/question/{question}", tags=["rags"], response_model=dto.RagQuestionResponseDTO)
 async def rag_question_answer(
     rag_id: str,
     question: str,
-    db: Session = Depends(get_db), 
-    current_user: dict = Depends(get_current_user)
-):
+    db: Session = Depends(get_db)):
     """
     RAG를 사용하여 질문에 대한 답변을 생성합니다.
     """
