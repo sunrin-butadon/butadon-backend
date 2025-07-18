@@ -9,6 +9,7 @@ class DatasetResponseDTO(BaseModel):
     id: str = Field(example="90c76ad8-e7b2-4d8b-8651-64801fbd9939")
     name: str = Field(example="보고서")
     made_by_user: str = Field(example="cmd8ts5lc0000y03qs7la34qp")  # User CUID
+    username: str = Field(None,example="yuchaeho")  # User 이름
     description: str | None = Field(None, example="string")
     file_type: str = Field(example="pdf")  # e.g., 'pdf', 'txt'
     created_at: str = Field(example="2025-07-18T21:59:31.467627")  # ISO format string for created_at

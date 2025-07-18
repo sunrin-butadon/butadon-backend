@@ -23,16 +23,45 @@ async def list_datasets(db: Session = Depends(get_db)):
     """
     데이터셋 목록을 조회합니다.
     """
-    datasets_list =  datasets_crud.get_dataset_list(db)
-
-    return datasets_list
+    datasets_list = datasets_crud.get_dataset_list(db)
+    
+    # 각 데이터셋에 대해 username 조회해서 추가
+    result = []
+    for dataset in datasets_list:
+        user = users_crud.get_user_by_id(dataset.made_by_user, db)
+        username = user.username if user else "Unknown"
+        
+        result.append(DatasetResponseDTO(
+            id=dataset.id,
+            name=dataset.name,
+            made_by_user=dataset.made_by_user,
+            username=username,
+            description=dataset.description,
+            file_type=dataset.file_type,
+            created_at=dataset.created_at
+        ))
+    
+    return result
 
 @router.get("/{dataset_id}", tags=["datasets"], response_model=DatasetResponseDTO)
 async def get_dataset(dataset_id: str, db: Session = Depends(get_db)):
     dataset = datasets_crud.get_dataset_by_id(dataset_id, db)
     if not dataset:
         raise HTTPException(status_code=404, detail="데이터셋을 찾을 수 없습니다.")
-    return dataset
+    
+    # username 조회
+    user = users_crud.get_user_by_id(dataset.made_by_user, db)
+    username = user.username if user else "Unknown"
+    
+    return DatasetResponseDTO(
+        id=dataset.id,
+        name=dataset.name,
+        made_by_user=dataset.made_by_user,
+        username=username,
+        description=dataset.description,
+        file_type=dataset.file_type,
+        created_at=dataset.created_at
+    )
 
 
 
@@ -91,7 +120,19 @@ async def create_dataset(
         # 사용자의 created_dataset_ids에 추가
         users_crud.add_created_dataset(current_user["sub"], dataset.id, db)
         
-        return dataset
+        # username 조회
+        user = users_crud.get_user_by_id(dataset.made_by_user, db)
+        username = user.username if user else "Unknown"
+        
+        return DatasetResponseDTO(
+            id=dataset.id,
+            name=dataset.name,
+            made_by_user=dataset.made_by_user,
+            username=username,
+            description=dataset.description,
+            file_type=dataset.file_type,
+            created_at=dataset.created_at
+        )
         
     except Exception as e:
         # 파일 저장 실패 시 파일 삭제
