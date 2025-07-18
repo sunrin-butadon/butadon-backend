@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from jose import jwt, JWTError
 from pydantic import BaseModel
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -15,8 +15,8 @@ bearer_scheme = HTTPBearer()
 
 
 def create_access_token(data: TokenPayload) -> str:
-    to_encode = data.copy()
-    expire = datetime.now(datetime.timezone.utc) + timedelta(minutes=settings.jwt_access_token_expire_minutes)
+    to_encode = data.model_dump()  # Pydantic 모델을 딕셔너리로 변환
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_access_token_expire_minutes)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
     return encoded_jwt

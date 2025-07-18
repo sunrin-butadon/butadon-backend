@@ -1,75 +1,49 @@
 import chromadb
-from chromadb.config import Settings as ChromaSettings
-from chromadb.errors import NotFoundError, InvalidArgumentError
-from typing import List, Dict, Optional
-import os
+from chromadb.errors import NotFoundError
 from app.core.config import settings
+from openai import OpenAI
 
 class ChromaDBClient:
     def __init__(self):
-        self.client = chromadb.PersistentClient(
-            settings=ChromaSettings(
-                allow_reset=True,
-                anonymized_telemetry=False
-            )
+        # ChromaDB 클라이언트 생성 (영구 저장을 위해 파일 시스템 사용)
+        self.client = chromadb.PersistentClient(path=settings.chroma_db_path)
+        self.openai_client = OpenAI(api_key=settings.openai_api_key)
+
+    def _get_embedding(self, text: str) -> list:
+        embedding = self.openai_client.embeddings.create(
+            input=text,
+            model=settings.openai_embeddings_model
         )
-        self.collections:list[str] = self.client.list_collections()
-        
-    def get_or_create_collection(self, name: str, metadata: Optional[Dict] = None):
-        """컬렉션을 가져오거나 생성"""
-        try:
-            return self.client.get_collection(name=name)
-        except NotFoundError:
-            # 메타데이터가 비어있으면 None으로 설정
-            collection_metadata = metadata if metadata else None
-            return self.client.create_collection(
-                name=name,
-                metadata=collection_metadata
-            )
-        except Exception as e:
-            print(f"Error in get_or_create_collection: {e}")
-            raise
+        return embedding.data[0].embedding
+
+    def get_chroma_collection_name(self, rag_id: str) -> str:
+        # rag_id에서 하이픈을 언더스코어로 변경하여 컬렉션 이름 반환
+        return f"rag_{rag_id.replace('-', '_')}"
     
-    def add_documents(self, 
-                     collection_name: str, 
-                     documents: List[str], 
-                     metadatas: Optional[List[Dict]] = None,
-                     ids: Optional[List[str]] = None):
-        """문서들을 컬렉션에 추가"""
-        collection = self.get_or_create_collection(collection_name)
-        
-        if ids is None:
-            ids = [f"doc_{i}" for i in range(len(documents))]
-            
+    def create_or_get_collection(self, collection_name: str):
+        # 컬렉션 생성 (이미 있으면 가져옴)
+        try:
+            collection = self.client.get_collection(collection_name)
+        except NotFoundError:
+            collection = self.client.create_collection(name=collection_name)
+        return collection
+
+    def add_documents(self, collection_name: str, documents: list, embeddings: list, ids: list):
+        # 컬렉션에 문서와 임베딩을 저장
+        collection = self.create_or_get_collection(collection_name)
         collection.add(
             documents=documents,
-            metadatas=metadatas,
+            embeddings=embeddings,
             ids=ids
         )
-    
-    def search_documents(self, 
-                        collection_name: str, 
-                        query: str, 
-                        n_results: int = 10,
-                        where: Optional[Dict] = None):
-        """문서 검색"""
-        collection = self.get_or_create_collection(collection_name)
-        
+
+    def search_by_embedding(self, collection_name: str, query_embedding: list, n_results: int = 5):
+        # 임베딩 벡터로 문서 검색
+        collection = self.create_or_get_collection(collection_name)
         results = collection.query(
-            query_texts=[query],
-            n_results=n_results,
-            where=where
+            query_embeddings=query_embedding,
+            n_results=n_results
         )
-        
         return results
     
-    def delete_collection(self, collection_name: str):
-        """컬렉션 삭제"""
-        try:
-            self.client.delete_collection(name=collection_name)
-        except Exception as e:
-            print(f"Error deleting collection {collection_name}: {e}")
-
-
-
 chroma_client = ChromaDBClient()

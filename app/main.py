@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
 
 from app.core.config import settings
 from app.api.routers import router
@@ -24,11 +25,10 @@ async def startup_event():
         init_db()
     
     from app.db.chroma.client import chroma_client
-    chroma_client.get_or_create_collection(
-        "default_collection", 
-        metadata={"description": "Default collection for the application"}
-    )
-    print(chroma_client.collections)
+
+    # 데이터셋 저장 디렉토리 설정
+    Path(settings.datasets_path).mkdir(parents=True, exist_ok=True)
+
 
 @app.get("/")
 async def read_root():

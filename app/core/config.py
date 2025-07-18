@@ -18,6 +18,10 @@ class Settings(BaseSettings):
 
     # OpenAI API settings
     openai_api_key: str
+    openai_embeddings_model: str
+
+    # File upload settings
+    datasets_path: str
 
     class Config:
         env_file = ".env"

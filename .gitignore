@@ -1,4 +1,7 @@
 auto_pull.sh
+*test*
+uploads/
+chroma/
 
 *.db
 *.sqlite3
