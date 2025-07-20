@@ -14,13 +14,11 @@ class RagCreateDTO(BaseModel):
     llm_model: str # OpenAI 모델 이름
 
 class RagResponseDTO(BaseModel):
-
-    
     id: str
-
     name: str
     description: Optional[str] = None
     made_by_user: str  # User CUID
+    username: Optional[str] = None  # User 이름
     created_at: datetime  # ISO format string
     
     dataset_ids: List[str]

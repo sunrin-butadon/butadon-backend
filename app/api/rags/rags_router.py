@@ -7,6 +7,7 @@ from app.db.deps import get_db
 from app.core.auth import get_current_user
 import app.api.rags.rags_crud as crud
 import app.api.rags.rags_dto as dto
+from app.api.users import users_crud
 
 from app.services.rags.build_db import build_db
 from app.db.chroma.client import chroma_client
@@ -21,21 +22,68 @@ async def create_rag(
     current_user: dict = Depends(get_current_user)
 ):
     rag = crud.create_rag(item, current_user['sub'], db)
-    return rag
+    
+    # username 조회
+    user = users_crud.get_user_by_id(rag.made_by_user, db)
+    username = user.username if user else "Unknown"
+    
+    return dto.RagResponseDTO(
+        id=rag.id,
+        name=rag.name,
+        description=rag.description,
+        made_by_user=rag.made_by_user,
+        username=username,
+        created_at=rag.created_at,
+        dataset_ids=rag.dataset_ids,
+        llm_model=rag.llm_model,
+        chunk_size=rag.chunk_size
+    )
 
 @router.get("/list", tags=["rags"], response_model=List[dto.RagResponseDTO])
 async def list_rags(db: Session = Depends(get_db)):
-
     rags = crud.get_rags_list(db)
-    return rags
+    
+    # 각 RAG에 대해 username 조회해서 추가
+    result = []
+    for rag in rags:
+        user = users_crud.get_user_by_id(rag.made_by_user, db)
+        username = user.username if user else "Unknown"
+        
+        result.append(dto.RagResponseDTO(
+            id=rag.id,
+            name=rag.name,
+            description=rag.description,
+            made_by_user=rag.made_by_user,
+            username=username,
+            created_at=rag.created_at,
+            dataset_ids=rag.dataset_ids,
+            llm_model=rag.llm_model,
+            chunk_size=rag.chunk_size
+        ))
+    
+    return result
 
 @router.get("/{rag_id}", tags=["rags"], response_model=dto.RagResponseDTO)
 async def get_rag(rag_id: str, db: Session = Depends(get_db)):
-
     rag = crud.get_rag_by_id(rag_id, db)
     if not rag:
         raise HTTPException(status_code=404, detail="RAG를 찾을 수 없습니다.")
-    return rag
+    
+    # username 조회
+    user = users_crud.get_user_by_id(rag.made_by_user, db)
+    username = user.username if user else "Unknown"
+    
+    return dto.RagResponseDTO(
+        id=rag.id,
+        name=rag.name,
+        description=rag.description,
+        made_by_user=rag.made_by_user,
+        username=username,
+        created_at=rag.created_at,
+        dataset_ids=rag.dataset_ids,
+        llm_model=rag.llm_model,
+        chunk_size=rag.chunk_size
+    )
 
 
 
